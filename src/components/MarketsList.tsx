@@ -27,6 +27,8 @@ const Row = styled.div<{ bgColor: string }>`
   gap: 16px;
   padding: 8px;
   background-color: ${(props) => props.bgColor};
+  opacity: 0;
+  animation: fadeIn 0.5s forwards;
   &:hover {
     background-color: #313131;
   }
@@ -35,9 +37,20 @@ const Row = styled.div<{ bgColor: string }>`
     border-bottom-left-radius: 3px;
     border-bottom-right-radius: 3px;
   }
+  @keyframes fadeIn {
+    to {
+      opacity: 1;
+    }
+  }
 `;
 
-const Cell = styled.div<{ isMarketName?: boolean }>`
+const BaseText = styled.div`
+  font-family: Arial, sans-serif;
+  font-size: 12px;
+  color: ${(props) => props.color || "#CACACA"};
+`;
+
+const Cell = styled(BaseText)<{ isMarketName?: boolean }>`
   padding: 8px;
   font-family: Arial, sans-serif;
   font-weight: ${(props) => (props.isMarketName ? "700" : "400")};
@@ -45,7 +58,7 @@ const Cell = styled.div<{ isMarketName?: boolean }>`
   color: ${(props) => (props.isMarketName ? "#FFFFFF" : "#CACACA")};
 `;
 
-const Loader = styled.div`
+const Loader = styled(BaseText)`
   display: flex;
   justify-content: center;
   align-items: center;
@@ -55,7 +68,7 @@ const Loader = styled.div`
   padding: 32px 16px;
 `;
 
-const ErrorContainer = styled.div`
+const ErrorContainer = styled(BaseText)`
   display: flex;
   justify-content: center;
   align-items: center;
