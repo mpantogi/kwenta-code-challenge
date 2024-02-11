@@ -1,6 +1,6 @@
 import { ethers } from "ethers";
 
-import perpsV2MarketDataAbi from "./PerpsV2MarketDataAbi.json";
+import perpsV2MarketDataAbi from "../services/contracts/PerpsV2MarketDataAbi.json";
 
 const contractAddress: string =
   process.env.NEXT_PUBLIC_PERPS_V2_MARKET_DATA_ADDRESS || "";
@@ -20,8 +20,6 @@ interface MarketData {
 
 // Function to fetch perps markets data
 export const getPerpsMarkets = async (): Promise<MarketData[]> => {
-  console.log("contractAddress", contractAddress);
-  console.log("ethers", ethers);
   try {
     // Initialize the provider and contract
     const provider = new ethers.JsonRpcProvider("https://mainnet.optimism.io");
@@ -30,8 +28,6 @@ export const getPerpsMarkets = async (): Promise<MarketData[]> => {
       perpsV2MarketDataAbi,
       provider
     );
-
-    console.log("provider", provider);
 
     // Fetch all market summaries
     const data = await contract.allMarketSummaries();
@@ -47,7 +43,6 @@ export const getPerpsMarkets = async (): Promise<MarketData[]> => {
         makerFee: market.feeRates.makerFee.toString(),
       },
     }));
-    console.log("processedData", processedData);
     return processedData;
   } catch (error) {
     console.error("Failed to fetch perps markets:", error);

@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { ethers } from "ethers";
-import { getPerpsMarkets } from "../app/lib/ethereum";
-import styles from "./page.module.css";
+import { useState, useEffect } from "react";
+import { getPerpsMarkets } from "../services/ethereum";
+import { MarketsList } from "../components/MarketsList";
+import styled from "styled-components";
 
 interface Market {
   name: string;
@@ -12,6 +12,24 @@ interface Market {
   makerFee: string;
   takerFee: string;
 }
+const Main = styled.main`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0 auto;
+  overflow: auto;
+  justify-content: center;
+  height: 100vh;
+  width: 100vw;
+`;
+
+const Title = styled.h1`
+  font-family: Arial, sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  margin: 20px 0;
+  text-align: left;
+`;
 
 export default function Home() {
   const [markets, setMarkets] = useState<Market[]>([]);
@@ -40,10 +58,10 @@ export default function Home() {
     fetchMarkets();
   }, []);
 
-  // Function to format string values for display.
-  const formatValue = (value: string, decimals = 18) => {
-    return ethers.formatUnits(value, decimals);
-  };
-
-  return <main className={styles.main}>Hello World</main>;
+  return (
+    <Main>
+      <Title>Synthetix Perps Markets</Title>
+      <MarketsList markets={markets} />
+    </Main>
+  );
 }
