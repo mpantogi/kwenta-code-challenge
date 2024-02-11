@@ -2,16 +2,10 @@ import { ethers } from "ethers";
 import styled from "styled-components";
 
 const TableContainer = styled.div`
-  border-top-right-radius: 3px;
-  border-top-left-radius: 3px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-`;
-
-const Table = styled.div`
-  overflow: auto;
-  max-height: 350px;
-  border-bottom-right-radius: 3px;
-  border-bottom-left-radius: 3px;
+  width: 100%;
+  border: 1px solid #313131;
+  border-radius: 5px;
 `;
 
 const Header = styled.div`
@@ -36,6 +30,11 @@ const Row = styled.div<{ bgColor: string }>`
   &:hover {
     background-color: #313131;
   }
+
+  &:last-child {
+    border-bottom-left-radius: 3px;
+    border-bottom-right-radius: 3px;
+  }
 `;
 
 const Cell = styled.div<{ isMarketName?: boolean }>`
@@ -46,6 +45,27 @@ const Cell = styled.div<{ isMarketName?: boolean }>`
   color: ${(props) => (props.isMarketName ? "#FFFFFF" : "#CACACA")};
 `;
 
+const Loader = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 12px;
+  font-family: Arial, sans-serif;
+  color: white;
+  padding: 32px 16px;
+`;
+
+const ErrorContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: red;
+  font-size: 12px;
+  font-family: Arial, sans-serif;
+  padding: 16px;
+  padding: 32px 16px;
+`;
+
 interface Market {
   name: string;
   size: string;
@@ -56,24 +76,13 @@ interface Market {
 
 interface Props {
   markets: Market[];
-}
-
-interface Market {
-  name: string;
-  size: string;
-  price: string;
-  makerFee: string;
-  takerFee: string;
-}
-
-interface Props {
-  markets: Market[];
+  isLoading: boolean;
+  error: string | null;
 }
 
 const formatPriceToUSD = (price: string) => {
   const etherValue = ethers.formatUnits(price, "ether");
-  // Assuming etherValue is equivalent to USD for demonstration
-  // For real applications, you might need to convert etherValue to actual USD based on the current exchange rate
+  // For real applications, we may use a third-party API service that offers cryptocurrency market data, such as CoinGecko, CoinMarketCap
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
@@ -95,7 +104,7 @@ const formatFeeToPercentage = (fee: string) => {
   return `${percentage.toFixed(2)}%`;
 };
 
-export const MarketsList: React.FC<Props> = ({ markets }) => {
+export const MarketsList: React.FC<Props> = ({ markets, isLoading, error }) => {
   // Convert size to a numeric value for sorting and add "-PERP" suffix to market name
   const sortedMarkets = markets
     .map((market) => ({
@@ -118,8 +127,12 @@ export const MarketsList: React.FC<Props> = ({ markets }) => {
         <Cell isMarketName={false}>MARKET SIZE</Cell>
         <Cell isMarketName={false}>MAKER/TAKER</Cell>
       </Header>
-      <Table>
-        {sortedMarkets.map((market, index) => (
+
+      {error && <ErrorContainer>{error}</ErrorContainer>}
+      {isLoading ? (
+        <Loader>Loading...</Loader>
+      ) : (
+        sortedMarkets.map((market, index) => (
           <Row key={index} bgColor={market.bgColor}>
             <Cell isMarketName={true}>{market.name}</Cell>
             <Cell>{formatPriceToUSD(market.price)}</Cell>
@@ -130,8 +143,8 @@ export const MarketsList: React.FC<Props> = ({ markets }) => {
               )}/${formatFeeToPercentage(market.takerFee)}`}
             </Cell>
           </Row>
-        ))}
-      </Table>
+        ))
+      )}
     </TableContainer>
   );
 };

@@ -16,26 +16,25 @@ const Main = styled.main`
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin: 0 auto;
-  overflow: auto;
-  justify-content: center;
-  height: 100vh;
-  width: 100vw;
+  margin: 20px 40px 40px 40px;
 `;
 
 const Title = styled.h1`
   font-family: Arial, sans-serif;
   font-weight: 700;
   font-size: 15px;
-  margin: 20px 0;
-  text-align: left;
+  margin: 40px 40px 0px 40px;
 `;
 
 export default function Home() {
   const [markets, setMarkets] = useState<Market[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchMarkets = async () => {
+      setIsLoading(true);
+      setError(null);
       try {
         const data = await getPerpsMarkets();
         console.log("data", data);
@@ -49,9 +48,11 @@ export default function Home() {
         }));
         setMarkets(mappedData);
         console.log("mappedData", mappedData);
+        setIsLoading(false);
       } catch (error) {
         console.error("Error fetching markets:", error);
-        throw new Error("Failed to fetch market data by keys");
+        setError("Failed to fetch market data");
+        setIsLoading(false);
       }
     };
 
@@ -59,9 +60,11 @@ export default function Home() {
   }, []);
 
   return (
-    <Main>
+    <>
       <Title>Synthetix Perps Markets</Title>
-      <MarketsList markets={markets} />
-    </Main>
+      <Main>
+        <MarketsList markets={markets} isLoading={isLoading} error={error} />
+      </Main>
+    </>
   );
 }
