@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { utils } from "ethers";
+import { ethers } from "ethers";
 import { getPerpsMarkets } from "../app/lib/ethereum";
 import styles from "./page.module.css";
 
@@ -20,6 +20,7 @@ export default function Home() {
     const fetchMarkets = async () => {
       try {
         const data = await getPerpsMarkets();
+        console.log("data", data);
         // Map the fetched MarketData[] to Market[], ensuring proper conversion
         const mappedData: Market[] = data.map((marketData) => ({
           name: marketData.asset, // Assuming 'asset' should be mapped to 'name', adjust as needed
@@ -29,8 +30,10 @@ export default function Home() {
           takerFee: marketData.feeRates.takerFee,
         }));
         setMarkets(mappedData);
+        console.log("mappedData", mappedData);
       } catch (error) {
         console.error("Error fetching markets:", error);
+        throw new Error("Failed to fetch market data by keys");
       }
     };
 
@@ -38,8 +41,9 @@ export default function Home() {
   }, []);
 
   // Function to format string values for display. Assumes these strings are BigNumber values encoded as strings.
-  const formatValue = (value: string, decimals = 18) =>
-    utils.formatUnits(value, decimals);
+  const formatValue = (value: string, decimals = 18) => {
+    return ethers.formatUnits(value, decimals);
+  };
 
   return <main className={styles.main}>Hello World</main>;
 }
