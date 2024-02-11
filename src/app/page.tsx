@@ -7,7 +7,7 @@ import styles from "./page.module.css";
 
 interface Market {
   name: string;
-  size: string; // Still strings, but represent BigNumber values
+  size: string;
   price: string;
   makerFee: string;
   takerFee: string;
@@ -23,7 +23,7 @@ export default function Home() {
         console.log("data", data);
         // Map the fetched MarketData[] to Market[], ensuring proper conversion
         const mappedData: Market[] = data.map((marketData) => ({
-          name: marketData.asset, // Assuming 'asset' should be mapped to 'name', adjust as needed
+          name: marketData.asset,
           size: marketData.marketSize,
           price: marketData.price,
           makerFee: marketData.feeRates.makerFee,
@@ -40,7 +40,7 @@ export default function Home() {
     fetchMarkets();
   }, []);
 
-  // Function to format string values for display. Assumes these strings are BigNumber values encoded as strings.
+  // Function to format string values for display.
   const formatValue = (value: string, decimals = 18) => {
     return ethers.formatUnits(value, decimals);
   };

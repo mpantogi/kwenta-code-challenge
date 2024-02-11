@@ -12,7 +12,7 @@ interface FeeRates {
 
 interface MarketData {
   market: string;
-  asset: string; // Potentially used for the market name after conversion
+  asset: string;
   price: string;
   marketSize: string;
   feeRates: FeeRates;
@@ -39,15 +39,15 @@ export const getPerpsMarkets = async (): Promise<MarketData[]> => {
     // Process the fetched data to match the MarketData interface
     const processedData: MarketData[] = data.map((market: any) => ({
       market: market.market,
-      asset: ethers.decodeBytes32String(market.asset), // Convert bytes32 to string
-      price: market.price.toString(), // Convert BigNumber to string
-      marketSize: market.marketSize.toString(), // Convert BigNumber to string
+      asset: ethers.decodeBytes32String(market.asset),
+      price: market.price.toString(),
+      marketSize: market.marketSize.toString(),
       feeRates: {
         takerFee: market.feeRates.takerFee.toString(),
         makerFee: market.feeRates.makerFee.toString(),
       },
     }));
-
+    console.log("processedData", processedData);
     return processedData;
   } catch (error) {
     console.error("Failed to fetch perps markets:", error);
