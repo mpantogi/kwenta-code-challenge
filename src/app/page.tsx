@@ -43,7 +43,6 @@ export default function Home() {
       setError(null);
       try {
         const data = await getPerpsMarkets();
-        console.log("data", data);
         // Map the fetched MarketData[] to Market[], ensuring proper conversion
         const mappedData: Market[] = data.map((marketData) => ({
           name: marketData.asset,
@@ -53,7 +52,6 @@ export default function Home() {
           takerFee: marketData.feeRates.takerFee,
         }));
         setMarkets(mappedData);
-        console.log("mappedData", mappedData);
         setIsLoading(false);
       } catch (error) {
         console.error("Error fetching markets:", error);
