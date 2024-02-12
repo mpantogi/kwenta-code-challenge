@@ -187,7 +187,7 @@ const formatPercentage = (percentage: number, useCompact: boolean) => {
 
 export const MarketsList: React.FC<Props> = ({ markets, isLoading, error }) => {
   const [ethPrice, setEthPrice] = useState<number | null>(null);
-  const [isCompact, setIsCompact] = useState(window.innerWidth <= 740);
+  const [isCompact, setIsCompact] = useState(false);
 
   useEffect(() => {
     const loadEthPrice = async () => {
@@ -199,12 +199,15 @@ export const MarketsList: React.FC<Props> = ({ markets, isLoading, error }) => {
   }, []);
 
   useEffect(() => {
-    const handleResize = () => setIsCompact(window.innerWidth <= 740);
-    window.addEventListener("resize", handleResize);
+    const updateCompactState = () => setIsCompact(window.innerWidth <= 740);
+    updateCompactState();
 
-    // Clean up
-    return () => window.removeEventListener("resize", handleResize);
+    window.addEventListener("resize", updateCompactState);
+
+    // Cleanup the event listener on component unmount
+    return () => window.removeEventListener("resize", updateCompactState);
   }, []);
+
   // Convert size to a numeric value for sorting and add "-PERP" suffix to market name
   const sortedMarkets = markets
     .map((market) => ({
@@ -231,8 +234,8 @@ export const MarketsList: React.FC<Props> = ({ markets, isLoading, error }) => {
       {isLoading ? (
         <Loader>Loading...</Loader>
       ) : (
-        sortedMarkets.map((market, index) => (
-          <Row key={index} bgColor={market.bgColor}>
+        sortedMarkets.map((market) => (
+          <Row key={market.name} bgColor={market.bgColor}>
             <Cell isMarketName={true}>{market.name}</Cell>
             <Cell>{formatPriceToUSD(market.price, ethPrice)}</Cell>
             <Cell>
