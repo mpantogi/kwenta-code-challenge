@@ -1,5 +1,7 @@
 import { ethers } from "ethers";
 import styled from "styled-components";
+import { useState, useEffect } from "react";
+import fetchEthPrice from "../utils/fetchEthPrice";
 
 const TableContainer = styled.div`
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -73,7 +75,7 @@ const Cell = styled(BaseText)<{ isMarketName?: boolean }>`
   color: ${(props) => (props.isMarketName ? "#FFFFFF" : "#CACACA")};
   @media (max-width: 560px) {
     padding: 4px;
-    font-size: 10px;
+    font-size: 11px;
   }
 `;
 
@@ -112,18 +114,18 @@ interface Props {
   error: string | null;
 }
 
-const formatPriceToUSD = (price: string) => {
+const formatPriceToUSD = (price: string, ethPrice: number | null) => {
   const etherValue = ethers.formatUnits(price, "ether");
-  const value = parseFloat(etherValue);
-
+  const valueInEther = parseFloat(etherValue);
+  const valueInUSD = valueInEther * (ethPrice ?? 0);
   let maximumFractionDigits = 2;
 
-  if (value > 0 && value < 0.01) {
+  if (valueInUSD > 0 && valueInUSD < 0.01) {
     const match = etherValue.match(/^0\.0*([1-9])/);
     if (match) {
       maximumFractionDigits = match[0].length - 2;
     }
-  } else if (value === 0) {
+  } else if (valueInUSD === 0) {
     maximumFractionDigits = 2;
   }
 
@@ -132,22 +134,21 @@ const formatPriceToUSD = (price: string) => {
     currency: "USD",
     minimumFractionDigits: 2,
     maximumFractionDigits: maximumFractionDigits,
-  }).format(value);
+  }).format(valueInUSD);
 };
 
-const formatMarketSizeToUSD = (size: string) => {
-  const etherValue = ethers.formatUnits(size, "ether");
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(parseFloat(etherValue));
+const calculateMarketSizeInUSD = (
+  size: string,
+  ethPrice: number | null
+): number => {
+  const sizeInEther = ethers.formatUnits(size, "ether");
+  const sizeInUSD = parseFloat(sizeInEther) * (ethPrice ?? 0);
+  return sizeInUSD;
 };
 
 const formatFeeToPercentage = (fee: string, price: string) => {
   const feeInEther = parseFloat(ethers.formatEther(fee));
   const priceInEther = parseFloat(ethers.formatEther(price));
-
   let feePercentage = (feeInEther / priceInEther) * 100;
 
   if (!isFinite(feePercentage)) {
@@ -157,7 +158,53 @@ const formatFeeToPercentage = (fee: string, price: string) => {
   return `${feePercentage.toFixed(2)}%`;
 };
 
+const formatUSD = (value: number, useCompact: boolean) => {
+  if (useCompact) {
+    return new Intl.NumberFormat("en-US", {
+      notation: "compact",
+      maximumFractionDigits: 2,
+    }).format(value);
+  } else {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(value);
+  }
+};
+
+const formatPercentage = (percentage: number, useCompact: boolean) => {
+  if (useCompact) {
+    if (percentage > 100000) {
+      return `${(percentage / 1000000).toFixed(2)}M%+`;
+    }
+    return `${percentage.toFixed(2)}%`;
+  } else {
+    return `${percentage.toFixed(2)}%`;
+  }
+};
+
 export const MarketsList: React.FC<Props> = ({ markets, isLoading, error }) => {
+  const [ethPrice, setEthPrice] = useState<number | null>(null);
+  const [isCompact, setIsCompact] = useState(window.innerWidth <= 740);
+
+  useEffect(() => {
+    const loadEthPrice = async () => {
+      const price = await fetchEthPrice();
+      setEthPrice(price);
+    };
+
+    loadEthPrice();
+  }, []);
+
+  useEffect(() => {
+    const handleResize = () => setIsCompact(window.innerWidth <= 740);
+    window.addEventListener("resize", handleResize);
+
+    // Clean up
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
   // Convert size to a numeric value for sorting and add "-PERP" suffix to market name
   const sortedMarkets = markets
     .map((market) => ({
@@ -187,13 +234,25 @@ export const MarketsList: React.FC<Props> = ({ markets, isLoading, error }) => {
         sortedMarkets.map((market, index) => (
           <Row key={index} bgColor={market.bgColor}>
             <Cell isMarketName={true}>{market.name}</Cell>
-            <Cell>{formatPriceToUSD(market.price)}</Cell>
-            <Cell>{formatMarketSizeToUSD(market.size)}</Cell>
+            <Cell>{formatPriceToUSD(market.price, ethPrice)}</Cell>
             <Cell>
-              {`${formatFeeToPercentage(
-                market.makerFee,
-                market.price
-              )} / ${formatFeeToPercentage(market.takerFee, market.price)}`}
+              {formatUSD(
+                calculateMarketSizeInUSD(market.size, ethPrice),
+                isCompact
+              )}
+            </Cell>
+            <Cell>
+              {`${formatPercentage(
+                parseFloat(
+                  formatFeeToPercentage(market.makerFee, market.price)
+                ),
+                isCompact
+              )} / ${formatPercentage(
+                parseFloat(
+                  formatFeeToPercentage(market.takerFee, market.price)
+                ),
+                isCompact
+              )}`}
             </Cell>
           </Row>
         ))
