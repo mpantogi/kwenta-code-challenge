@@ -17,6 +17,9 @@ const Main = styled.main`
   flex-direction: column;
   align-items: center;
   margin: 20px 40px 40px 40px;
+  @media (max-width: 600px) {
+    margin: 20px 10px 0px 10px;
+  }
 `;
 
 const Title = styled.h1`
@@ -24,6 +27,9 @@ const Title = styled.h1`
   font-weight: 700;
   font-size: 15px;
   margin: 40px 40px 0px 40px;
+  @media (max-width: 600px) {
+    margin: 40px 40px 0px 10px;
+  }
 `;
 
 export default function Home() {

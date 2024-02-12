@@ -6,6 +6,9 @@ const TableContainer = styled.div`
   width: 100%;
   border: 1px solid #313131;
   border-radius: 5px;
+  overflow-x: auto;
+  display: block;
+  min-width: fit-content;
 `;
 
 const Header = styled.div`
@@ -19,6 +22,12 @@ const Header = styled.div`
   z-index: 1;
   border-top-left-radius: 3px;
   border-top-right-radius: 3px;
+  @media (max-width: 560px) {
+    gap: 8px;
+    padding: 4px;
+    grid-template-columns: 1fr 0.5fr 1fr 1fr;
+    text-align: center;
+  }
 `;
 
 const Row = styled.div<{ bgColor: string }>`
@@ -42,6 +51,12 @@ const Row = styled.div<{ bgColor: string }>`
       opacity: 1;
     }
   }
+  @media (max-width: 560px) {
+    gap: 8px;
+    padding: 4px;
+    grid-template-columns: 1fr 0.5fr 1fr 1fr;
+    text-align: center;
+  }
 `;
 
 const BaseText = styled.div`
@@ -56,6 +71,10 @@ const Cell = styled(BaseText)<{ isMarketName?: boolean }>`
   font-weight: ${(props) => (props.isMarketName ? "700" : "400")};
   font-size: 12px;
   color: ${(props) => (props.isMarketName ? "#FFFFFF" : "#CACACA")};
+  @media (max-width: 560px) {
+    padding: 4px;
+    font-size: 10px;
+  }
 `;
 
 const Loader = styled(BaseText)`
@@ -95,11 +114,25 @@ interface Props {
 
 const formatPriceToUSD = (price: string) => {
   const etherValue = ethers.formatUnits(price, "ether");
-  // For real applications, we may use a third-party API service that offers cryptocurrency market data, such as CoinGecko, CoinMarketCap
+  const value = parseFloat(etherValue);
+
+  let maximumFractionDigits = 2;
+
+  if (value > 0 && value < 0.01) {
+    const match = etherValue.match(/^0\.0*([1-9])/);
+    if (match) {
+      maximumFractionDigits = match[0].length - 2;
+    }
+  } else if (value === 0) {
+    maximumFractionDigits = 2;
+  }
+
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
-  }).format(parseFloat(etherValue));
+    minimumFractionDigits: 2,
+    maximumFractionDigits: maximumFractionDigits,
+  }).format(value);
 };
 
 const formatMarketSizeToUSD = (size: string) => {
@@ -111,10 +144,17 @@ const formatMarketSizeToUSD = (size: string) => {
   }).format(parseFloat(etherValue));
 };
 
-const formatFeeToPercentage = (fee: string) => {
-  const feeInEther = ethers.formatUnits(fee, "ether");
-  const percentage = parseFloat(feeInEther) * 100;
-  return `${percentage.toFixed(2)}%`;
+const formatFeeToPercentage = (fee: string, price: string) => {
+  const feeInEther = parseFloat(ethers.formatEther(fee));
+  const priceInEther = parseFloat(ethers.formatEther(price));
+
+  let feePercentage = (feeInEther / priceInEther) * 100;
+
+  if (!isFinite(feePercentage)) {
+    feePercentage = 0;
+  }
+
+  return `${feePercentage.toFixed(2)}%`;
 };
 
 export const MarketsList: React.FC<Props> = ({ markets, isLoading, error }) => {
@@ -123,12 +163,11 @@ export const MarketsList: React.FC<Props> = ({ markets, isLoading, error }) => {
     .map((market) => ({
       ...market,
       name: `${market.name}-PERP`,
-      numericSize: Number(market.size), // Convert size for sorting
+      numericSize: Number(market.size),
     }))
     .sort((a, b) => b.numericSize - a.numericSize)
     .map((market, index) => ({
       ...market,
-      // Assign bgColor based on new index after sorting
       bgColor: index % 2 === 0 ? "#212121" : "#1A1A1A",
     }));
 
@@ -152,8 +191,9 @@ export const MarketsList: React.FC<Props> = ({ markets, isLoading, error }) => {
             <Cell>{formatMarketSizeToUSD(market.size)}</Cell>
             <Cell>
               {`${formatFeeToPercentage(
-                market.makerFee
-              )}/${formatFeeToPercentage(market.takerFee)}`}
+                market.makerFee,
+                market.price
+              )} / ${formatFeeToPercentage(market.takerFee, market.price)}`}
             </Cell>
           </Row>
         ))
